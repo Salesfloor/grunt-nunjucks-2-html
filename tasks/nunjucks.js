@@ -6,12 +6,13 @@
  * Licensed under the MIT license.
  */
 
+'use strict';
+
+var YAML = require('yamljs');
 var nunjucks = require('nunjucks');
 var path = require('path');
 
 module.exports = function(grunt) {
-    'use strict';
-
     grunt.registerMultiTask('nunjucks', 'Renders nunjucks` template to HTML', function() {
         var options = this.options();
 
@@ -24,12 +25,26 @@ module.exports = function(grunt) {
             envOptions.tags = options.tags;
         }
 
+        var en_US = YAML.load('locales/en_US.yml');
         var basePath = options.paths || '';
-        nunjucks.configure(basePath, envOptions);
+        var env = nunjucks.configure(basePath, envOptions);
+
+        env.addFilter('trans', function(str, object) {
+          var string = en_US[str],
+              obj = obj || {};
+
+          for (var params in object) {
+            if (object.hasOwnProperty(param)) {
+              string = string.replace('%' + params + '%', object[params]);
+            }
+          }
+
+          return string;
+        });
 
 
         this.files.forEach(function(f) {
-            var filepath = path.join(process.cwd(), f.src[0]);
+            var filepath = path.resolve(__dirname, '../../../', f.src[0]);
 
             if (!grunt.file.exists(filepath)) {
                 grunt.log.warn('Template`s file "' + filepath + '" not found.');
@@ -41,7 +56,7 @@ module.exports = function(grunt) {
                 : options.data || {};
 
             var template = grunt.file.read(filepath);
-            var compiledHtml = nunjucks.renderString(template, data);
+            var compiledHtml = env.renderString(template, data);
 
             grunt.file.write(f.dest, compiledHtml);
             grunt.log.writeln('File "' + f.dest + '" created.');
