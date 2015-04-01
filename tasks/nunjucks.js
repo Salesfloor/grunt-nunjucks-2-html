@@ -34,7 +34,7 @@ module.exports = function(grunt) {
               obj = obj || {};
 
           for (var params in object) {
-            if (object.hasOwnProperty(param)) {
+            if (object.hasOwnProperty(params)) {
               string = string.replace('%' + params + '%', object[params]);
             }
           }
